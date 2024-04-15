@@ -13,3 +13,7 @@
         2.以mmap把pcap文件映射到内存
         3.循环解析,并统计包的数量
         4.输出到stdout
+
+
+/usr/include/pcap/pcap.h
+/usr/include/linux/if_ether.h

@@ -2,7 +2,7 @@ CC = g++
 CFLAGS = -Wall -std=c++11
 LDFLAGS = -lpcap
 
-SRC = main.cpp
+SRC = *.cpp
 OBJ = $(SRC:.cpp=.o)
 TARGET = main
 
