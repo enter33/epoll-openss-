@@ -42,7 +42,7 @@ void analysis_tcp(prt_info_t*);
 void analysis_udp(prt_info_t*);
 
 //探测应用层协议类型
-int detect_protocol_type(void*);
+int detect_protocol_type(prt_info_t*);
 
 //usr/include/linux/if_ether.h
 //以太网帧头部结构体

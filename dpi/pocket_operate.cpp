@@ -178,6 +178,8 @@ void analysis_ipv4(prt_info_t* p)
         analysis_udp(p);
     }
 
+    int prt_type = detect_protocol_type(p);
+    p->app_prt_types[prt_type] ++;
 
     return;
 }
@@ -192,13 +194,13 @@ void analysis_ipv6(prt_info_t* p)
 //分析tcp
 void analysis_tcp(prt_info_t* p)
 {
+    //判断是否具有数据,无则丢弃
     if(ntohs(p->iph->tot_len) - p->tcph->th_off*4 - p->iph->ihl*4 <= 0)
     {
         // printf("no data\n");
         return;
     }
-    //data
-    void* data = (void*)((char*)p->tcph + sizeof(*(p->tcph)));
+    
 
     return;
 }
@@ -212,16 +214,28 @@ void analysis_udp(prt_info_t* p)
         return;
     }
 
-    //data
-    void* data = (void*)((char*)p->udph + sizeof(*(p->udph)));
+    
 
     return;
 }
 
 
-int detect_protocol_type(void* data)
+int detect_protocol_type(prt_info_t* p)
 {
-    int type;
+    int type = PRT_UNKNOW;
+
+    for(int i = 0;i < PRT_TYPES_MAX;i++)
+    {
+        if(p->func_detec[i].func == NULL && p->func_detec[i].flag != p->iph->protocol)
+        {
+            continue;
+        }
+        if(p->func_detec[i].func(p) == 1)
+        {
+            type = i;
+            return type;
+        }
+    }
 
 
     return type;
