@@ -1,7 +1,6 @@
 #include "pocket_operate.h"
 
 
-
 int get_pkt_count( char *argv[])
 {
     int pkt_count;//包的数量
@@ -66,9 +65,40 @@ int get_pkt_count( char *argv[])
 
 void handler(u_char *user, const struct pcap_pkthdr *h,const u_char *bytes)
 {
-    ((prt_info_t*)user)->count++;
+    ((prt_info_t*)user)->iph = NULL;
+    ((prt_info_t*)user)->ethh = NULL;
+    ((prt_info_t*)user)->tcph = NULL;
+    ((prt_info_t*)user)->udph = NULL;
+
     //对pcap_pkthdr和bytes进行处理
 
+    //包不完整,丢弃
+    if(h->caplen != h->len)
+    {
+        return;
+    }
+
+    //以太网帧头部,14字节
+    // ethhdr eth = *(ethhdr*)bytes;
+    ((prt_info_t*)user)->ethh = (ethhdr*)bytes;
+
+    //不是ip数据报,丢弃
+    //网络字节序转换主机字节序
+    if(ntohs(((prt_info_t*)user)->ethh->h_proto) != ETH_P_IP)
+    {
+        return;
+    }
+
+    ((prt_info_t*)user)->count++;
+    // ((prt_info_t*)user)->iph = (iphdr*)(bytes + sizeof(ethhdr));
+
+    // printf("bytes addr = %p\n",bytes);
+    // printf("size = %d\n",sizeof(ethhdr));
+    // printf("iph addr = %p\n",((prt_info_t*)user)->iph);
+
+
+    analysis_ip(((prt_info_t*)user));
+    
     return;
 }
 
@@ -95,5 +125,104 @@ int get_pkt_count_loop(char *argv[],prt_info_t *prt)
 
     //关闭pcap文件
     pcap_close(p);
-    return prt->count;
+    return 0;
+}
+
+//处理ip协议
+void analysis_ip(prt_info_t* p)
+{
+    p->iph = (iphdr*)((char*)p->ethh + sizeof(ethhdr));
+    // printf("ethh addr = %p\n",p->ethh);
+    // printf("size = %d\n",sizeof(ethhdr));
+    // printf("iph addr = %p\n",p->iph);
+
+    //对于ip分片,只处理第一个片
+    //偏移量为0的情况下,一种是未分片,一种是第一个片
+    //不为0,则为第n个片
+    if(ntohs(p->iph->frag_off) & 0x1FFF != 0)//0x1FFF = 0001 1111 1111 1111
+    {
+        return;
+    }
+
+    if(p->iph->version == 4)//ipv4
+    {
+        analysis_ipv4(p);
+    }
+    else if(p->iph->version == 6)//ipv6
+    {
+        analysis_ipv6(p);
+    }
+
+    return;
+}
+
+//分析ipv4
+void analysis_ipv4(prt_info_t* p)
+{
+    if(p->iph->protocol == IPPROTO_TCP)//TCp包
+    {
+        p->tcp_count++;
+
+        //tcp header
+        p->tcph = (tcphdr*)((char*)p->iph  + p->iph->ihl*4);
+
+        analysis_tcp(p);
+    }
+
+    else if(p->iph->protocol == IPPROTO_UDP)//UDP包
+    {
+        p->udp_count++;
+        //udp header
+        p->udph = (udphdr*)((char*)p->iph  + p->iph->ihl*4);
+
+        analysis_udp(p);
+    }
+
+
+    return;
+}
+
+//分析ipv6
+void analysis_ipv6(prt_info_t* p)
+{
+    return;
+}
+
+
+//分析tcp
+void analysis_tcp(prt_info_t* p)
+{
+    if(ntohs(p->iph->tot_len) - p->tcph->th_off*4 - p->iph->ihl*4 <= 0)
+    {
+        // printf("no data\n");
+        return;
+    }
+    //data
+    void* data = (void*)((char*)p->tcph + sizeof(*(p->tcph)));
+
+    return;
+}
+
+//分析udp
+void analysis_udp(prt_info_t* p)
+{
+    if(ntohs(p->udph->len) <= 8)
+    {
+        printf("no data\n");
+        return;
+    }
+
+    //data
+    void* data = (void*)((char*)p->udph + sizeof(*(p->udph)));
+
+    return;
+}
+
+
+int detect_protocol_type(void* data)
+{
+    int type;
+
+
+    return type;
 }

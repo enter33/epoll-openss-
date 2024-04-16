@@ -11,6 +11,12 @@ prt_info_t *init_prt_info(void)
         //使用智能指针防止内存泄漏
         prt_info_t *p = new prt_info_t();
         p->count = 0;
+        p->tcp_count = 0;
+        p->udp_count = 0;
+        p->iph = NULL;
+        p->ethh = NULL;
+        p->tcph = NULL;
+        p->udph = NULL;
         return p;
     }
     catch(const std::bad_alloc& e)
@@ -34,6 +40,8 @@ int free_prt_info(prt_info_t *p)
 int output_prt_info(prt_info_t *p)
 {
     printf("pkt count = %d\n",p->count);
+    printf("tcp_pkt count = %d\n",p->tcp_count);
+    printf("udp_pkt count = %d\n",p->udp_count);
     return 0;
 }
 

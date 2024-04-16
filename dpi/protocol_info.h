@@ -4,6 +4,11 @@
 #define __PROTOCOL_INFO__
 #include <stdio.h>
 #include <iostream>
+#include <linux/if_ether.h>
+#include <arpa/inet.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
 
 
 //协议栈信息结构体
@@ -11,6 +16,14 @@ struct prt_info_t
 {
     int count;
     //其他信息
+    int tcp_count;
+    int udp_count;
+
+    ethhdr* ethh;//帧头
+    iphdr* iph;//ip头
+    tcphdr* tcph;//tcp头
+    udphdr* udph;//udp头
+
 };
 
 //初始化协议栈信息结构体函数
