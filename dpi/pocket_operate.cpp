@@ -73,6 +73,8 @@ int get_pkt_count( char *argv[])
 
 void handler(u_char *user, const struct pcap_pkthdr *h,const u_char *bytes)
 {
+    ((prt_info_t*)user)->count++;
+
     ((prt_info_t*)user)->iph = NULL;
     ((prt_info_t*)user)->ethh = NULL;
     ((prt_info_t*)user)->tcph = NULL;
@@ -90,14 +92,23 @@ void handler(u_char *user, const struct pcap_pkthdr *h,const u_char *bytes)
     // ethhdr eth = *(ethhdr*)bytes;
     ((prt_info_t*)user)->ethh = (ethhdr*)bytes;
 
-    //不是ip数据报,丢弃
-    //网络字节序转换主机字节序
-    if(ntohs(((prt_info_t*)user)->ethh->h_proto) != ETH_P_IP)
+
+    switch (ntohs(((prt_info_t*)user)->ethh->h_proto))
     {
+    case ETH_P_ARP:
+        ((prt_info_t*)user)->arp_count ++;
+        return;
+
+    //不是ip数据报,丢弃
+    case ETH_P_IP:
+        ((prt_info_t*)user)->ip_count ++;
+        break;
+    
+    default:
+        ((prt_info_t*)user)->other_count ++;
         return;
     }
 
-    ((prt_info_t*)user)->count++;
     // ((prt_info_t*)user)->iph = (iphdr*)(bytes + sizeof(ethhdr));
 
     // printf("bytes addr = %p\n",bytes);

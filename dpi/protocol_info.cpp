@@ -14,6 +14,9 @@ prt_info_t *init_prt_info(void)
         //使用智能指针防止内存泄漏
         prt_info_t *p = new prt_info_t();
         p->count = 0;
+        p->arp_count = 0;
+        p->ip_count = 0;
+        p->other_count = 0;
         p->tcp_count = 0;
         p->udp_count = 0;
         p->iph = NULL;
@@ -58,15 +61,20 @@ int free_prt_info(prt_info_t *p)
 //输出协议栈信息
 int output_prt_info(prt_info_t *p)
 {
-    log_info("pkt count = %d\n",p->count);
-    log_info("tcp_pkt count = %d\n",p->tcp_count);
-    log_info("udp_pkt count = %d\n",p->udp_count);
+    log_info("tt_pkt count = %d\n",p->count);
+    log_info("\tip_pkt count = %d\n",p->ip_count);
+    log_info("\t\ttcp_pkt count = %d\n",p->tcp_count);
+    log_info("\t\tudp_pkt count = %d\n",p->udp_count);
+    log_info("\tarp_pkt count = %d\n",p->arp_count);
+    log_info("\tother_pkt count = %d\n",p->other_count);
 
+
+    log_info("app protocol:\n");
     for(int i = 0; i<PRT_TYPES_MAX;i++)
     {
         if(p->app_prt_types[i] != 0)
         {
-            log_info("%s : %d\n",p->app_prt_names[i],p->app_prt_types[i]);
+            log_info("\t%s : %d\n",p->app_prt_names[i],p->app_prt_types[i]);
         }
     }
     return 0;
@@ -92,16 +100,20 @@ int cmp_four_tupel(prt_info_t *p,int type)
 {
     if(p->iph->protocol == IPPROTO_TCP)
     {
-        if(p->tulels_prt[type].sip == p->iph->saddr && p->tulels_prt[type].sport == p->tcph->source)
+        if(p->tulels_prt[type].sip == p->iph->saddr \
+        && p->tulels_prt[type].sport == p->tcph->source)
         {
-            if(p->tulels_prt[type].dip == p->iph->daddr && p->tulels_prt[type].dport == p->tcph->dest)
+            if(p->tulels_prt[type].dip == p->iph->daddr \
+            && p->tulels_prt[type].dport == p->tcph->dest)
             {
                 return 1;
             }
         }
-        else if(p->tulels_prt[type].sip == p->iph->daddr && p->tulels_prt[type].sport == p->tcph->dest)
+        else if(p->tulels_prt[type].sip == p->iph->daddr \
+        && p->tulels_prt[type].sport == p->tcph->dest)
         {
-            if(p->tulels_prt[type].dip == p->iph->saddr && p->tulels_prt[type].dport == p->tcph->source)
+            if(p->tulels_prt[type].dip == p->iph->saddr \
+            && p->tulels_prt[type].dport == p->tcph->source)
             {
                 return 1;
             }
@@ -109,16 +121,20 @@ int cmp_four_tupel(prt_info_t *p,int type)
     }
     else if(p->iph->protocol == IPPROTO_UDP)
     {
-        if(p->tulels_prt[type].sip == p->iph->saddr && p->tulels_prt[type].sport == p->udph->source)
+        if(p->tulels_prt[type].sip == p->iph->saddr \
+        && p->tulels_prt[type].sport == p->udph->source)
         {
-            if(p->tulels_prt[type].dip == p->iph->daddr && p->tulels_prt[type].dport == p->udph->dest)
+            if(p->tulels_prt[type].dip == p->iph->daddr \
+            && p->tulels_prt[type].dport == p->udph->dest)
             {
                 return 1;
             }
         }
-        else if(p->tulels_prt[type].sip == p->iph->daddr && p->tulels_prt[type].sport == p->udph->dest)
+        else if(p->tulels_prt[type].sip == p->iph->daddr \
+        && p->tulels_prt[type].sport == p->udph->dest)
         {
-            if(p->tulels_prt[type].dip == p->iph->saddr && p->tulels_prt[type].dport == p->udph->source)
+            if(p->tulels_prt[type].dip == p->iph->saddr \
+            && p->tulels_prt[type].dport == p->udph->source)
             {
                 return 1;
             }

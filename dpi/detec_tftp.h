@@ -5,6 +5,11 @@
 #include "protocol_info.h"
 
 
+//没有找到其他包含宏定义的头文件
+#define TFTP_RRQ 1
+#define TFTP_WRQ 2
+
+
 #ifndef DETEC_TFTP
 #define DETEC_TFTP
 int detec_tftp(prt_info_t* p);

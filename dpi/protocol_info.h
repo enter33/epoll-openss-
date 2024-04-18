@@ -38,6 +38,9 @@ struct four_tupel
 struct prt_info_t
 {
     int count;
+    int arp_count;
+    int ip_count;
+    int other_count;
     //其他信息
     int tcp_count;
     int udp_count;
