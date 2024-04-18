@@ -14,6 +14,14 @@
         3.循环解析,并统计包的数量
         4.输出到stdout
 
+如果想要增加应用层协议探测的数量,需要
+    1.准备协议探测的头文件和实现文件,如detec_ssh.h and detec_ssh.cpp
+    2.在protocol_types.h中添加对应的宏和name
+    3.在protocol_info.cpp的init_prt_info函数中添加对应的函数指针
+
 
 /usr/include/pcap/pcap.h
 /usr/include/linux/if_ether.h
+
+//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
+//https://github.com/enter33/dpi.git
