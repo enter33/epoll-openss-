@@ -1,3 +1,11 @@
+//解析pcap文件,将pcap分解成pcap header和pcap data
+//利用pcap loop循环获取pocket,并处理
+//首先分析以太网帧协议
+//分析ip层协议
+//分析传输层协议,确定tcp/udp
+//分析应用层协议
+    //模块化处理,每种协议对应一个头文件
+    //对协议进行增删操作,只需要加入新的头文件,以及在info和types文件中做相应更改即可
 #include "pocket_operate.h"
 
 
@@ -166,16 +174,15 @@ void analysis_ipv4(prt_info_t* p)
         //tcp header
         p->tcph = (tcphdr*)((char*)p->iph  + p->iph->ihl*4);
 
-        analysis_tcp(p);
+        // analysis_tcp(p);
     }
-
     else if(p->iph->protocol == IPPROTO_UDP)//UDP包
     {
         p->udp_count++;
         //udp header
         p->udph = (udphdr*)((char*)p->iph  + p->iph->ihl*4);
 
-        analysis_udp(p);
+        // analysis_udp(p);
     }
 
     int prt_type = detect_protocol_type(p);
@@ -219,18 +226,46 @@ void analysis_udp(prt_info_t* p)
     return;
 }
 
-
+//探测应用层协议类型
 int detect_protocol_type(prt_info_t* p)
 {
     int type = PRT_UNKNOW;
 
+    //判断是否具有应用数据,无则丢弃
+    if(p->iph->protocol == IPPROTO_TCP)//tcp判断
+    {
+        if(ntohs(p->iph->tot_len) - p->tcph->doff*4 - p->iph->ihl*4 <= 0)//ip总长减去iph和tcph = data len
+        {
+            return type;
+        }
+    }
+    else if(p->iph->protocol == IPPROTO_UDP)//udp
+    {
+        if(ntohs(p->udph->len) <= 8)
+        {
+            return type;
+        }
+    }
+
+    // printf("start detec\n");
+
+    //调用各类型探测函数判断应用协议类型
     for(int i = 0;i < PRT_TYPES_MAX;i++)
     {
-        if(p->func_detec[i].func == NULL && p->func_detec[i].flag != p->iph->protocol)
+        if(p->func_detec[i].func == NULL || p->func_detec[i].flag != p->iph->protocol)
         {
             continue;
         }
+
+        // printf("start detec\n");
         if(p->func_detec[i].func(p) == 1)
+        {
+            type = i;
+            save_four_tupel(p,i);
+            return type;
+        }
+
+        if(cmp_four_tupel(p,i))
         {
             type = i;
             return type;

@@ -1,6 +1,8 @@
 //protocol_info.h实现代码
 
 #include "protocol_info.h"
+#include "detec_ssh.h"
+#include "detec_tftp.h"
 // #include "detec_func.h"//为什么放在cpp里就不重复定义,放在.h里面就重定义
 
 
@@ -22,6 +24,7 @@ prt_info_t *init_prt_info(void)
         for(int i = 0;i < PRT_TYPES_MAX;i++)
         {
             p->app_prt_types[i] = 0;
+            p->tulels_prt[i] = {0};
         }
 //按需求增加函数指针
 #ifdef DETEC_SSH
@@ -66,6 +69,64 @@ int output_prt_info(prt_info_t *p)
             log_info("%s : %d\n",p->app_prt_names[i],p->app_prt_types[i]);
         }
     }
+    return 0;
+}
+
+//保存四元组
+int save_four_tupel(prt_info_t *p,int type)
+{
+    if(p->iph->protocol == IPPROTO_TCP)
+    {
+        p->tulels_prt[type] = {p->iph->saddr,p->tcph->source,p->iph->daddr,p->tcph->dest};
+    }
+    else if(p->iph->protocol == IPPROTO_UDP)
+    {
+        p->tulels_prt[type] = {p->iph->saddr,p->udph->source,p->iph->daddr,p->udph->dest};
+    }
+
+    return 0;
+}
+
+//判断当前的源ip和port\目标ip和port能否与已有的ip和port对应,如果能,能说明该应用数据包的协议与已有的ip和port对应的应用协议一致
+int cmp_four_tupel(prt_info_t *p,int type)
+{
+    if(p->iph->protocol == IPPROTO_TCP)
+    {
+        if(p->tulels_prt[type].sip == p->iph->saddr && p->tulels_prt[type].sport == p->tcph->source)
+        {
+            if(p->tulels_prt[type].dip == p->iph->daddr && p->tulels_prt[type].dport == p->tcph->dest)
+            {
+                return 1;
+            }
+        }
+        else if(p->tulels_prt[type].sip == p->iph->daddr && p->tulels_prt[type].sport == p->tcph->dest)
+        {
+            if(p->tulels_prt[type].dip == p->iph->saddr && p->tulels_prt[type].dport == p->tcph->source)
+            {
+                return 1;
+            }
+        }
+    }
+    else if(p->iph->protocol == IPPROTO_UDP)
+    {
+        if(p->tulels_prt[type].sip == p->iph->saddr && p->tulels_prt[type].sport == p->udph->source)
+        {
+            if(p->tulels_prt[type].dip == p->iph->daddr && p->tulels_prt[type].dport == p->udph->dest)
+            {
+                return 1;
+            }
+        }
+        else if(p->tulels_prt[type].sip == p->iph->daddr && p->tulels_prt[type].sport == p->udph->dest)
+        {
+            if(p->tulels_prt[type].dip == p->iph->saddr && p->tulels_prt[type].dport == p->udph->source)
+            {
+                return 1;
+            }
+        }
+    }
+
+
+    
     return 0;
 }
 
