@@ -1,6 +1,4 @@
 #include "main.h"
-// #include "log.h"
-// #include "protocol_info.h"
 
 int main(int argc,char *argv[])
 {
